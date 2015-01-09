@@ -85,6 +85,9 @@ import com.coinbase.api.exception.UnauthorizedException;
 import com.coinbase.api.exception.UnspecifiedAccount;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
 
 class CoinbaseImpl implements Coinbase {
 
@@ -1075,7 +1078,7 @@ class CoinbaseImpl implements Coinbase {
 
         if (_accessToken == null) {
             throw new CoinbaseException(
-                "This client must have been initialized with an access token in order to call revokeToken()"
+                    "This client must have been initialized with an access token in order to call revokeToken()"
             );
         }
 
@@ -1211,12 +1214,13 @@ class CoinbaseImpl implements Coinbase {
     }
 
     private String doHttp(URL url, String method, Object requestBody) throws IOException, CoinbaseException {
-        URLConnection urlConnection = url.openConnection();
+        OkUrlFactory factory = new OkUrlFactory(new OkHttpClient());
+        URLConnection urlConnection = factory.open(url);
         if (!(urlConnection instanceof HttpsURLConnection)) {
             throw new RuntimeException(
                     "Custom Base URL must return javax.net.ssl.HttpsURLConnection on openConnection.");
         }
-        HttpsURLConnection conn = (HttpsURLConnection) urlConnection;
+        HttpsURLConnectionImpl conn = (HttpsURLConnectionImpl) urlConnection;
         conn.setSSLSocketFactory(_socketFactory);
         conn.setRequestMethod(method);
 
